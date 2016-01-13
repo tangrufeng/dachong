@@ -5,7 +5,10 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import org.apache.log4j.PropertyConfigurator;
-import org.tom.vd.config.Config;
+import org.tom.vd.mina.ApCommand;
+import org.tom.vd.mina.MinaGameInterface;
+
+import com.effecia.mina.MinaCommandPo;
 
 /**
  * <p>Title: VirtualDealer.java</p>
@@ -28,6 +31,17 @@ public class Main {
 			e.printStackTrace();
 		}
 		PropertyConfigurator.configure(prop);
+	}
+	
+	private void initMina(){
+		System.out.println("初始话Mina，并注册..........");
+		new MinaGameInterface();
+		MinaCommandPo regiestPo  = new MinaCommandPo();
+		regiestPo.setModuleType("PLATFORM");
+		regiestPo.setRequestType("REQUEST");
+		regiestPo.setCommandType(ApCommand.TABLE_INIT.toString());
+		MinaGameInterface.ioSession.write(regiestPo);
+		System.out.println("初始话Mina，并注册结束..........");
 	}
 	
 	private void init(){

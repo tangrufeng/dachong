@@ -12,7 +12,7 @@ import org.tom.vd.config.Config;
  * <p>Copyright: Copyright (c) 2014</p>
  * <p>Company: jc-yt.com</p>
  * @author tang
- * @date 2016-1-10 下午4:43:09
+ * @date 2016-1-10 锟斤拷锟斤拷4:43:09
  * @version 1.0
  *
  */
@@ -24,7 +24,10 @@ public class FlowPusher implements Runnable{
 	
 	private String filePath;
 	
-	public FlowPusher(String red5Host,String filePath){
+	private String id;
+	
+	public FlowPusher(String red5Host,String filePath,String id){
+		this.id=id;
 		this.red5Host=red5Host;
 		this.filePath=filePath;
 	}
@@ -57,7 +60,7 @@ public class FlowPusher implements Runnable{
 			Process p = builder.command(commend).start();
 			onProgressListener.onProgressStateChangedListener(true);
 
-			BufferedReader buf = null; // 保存ffmpeg的输出结果流
+			BufferedReader buf = null; // 
 			String line = null;
 
 			buf = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -65,11 +68,11 @@ public class FlowPusher implements Runnable{
 			while ((line = buf.readLine()) != null) {
 				System.out.println(line);
 				if(onProgressListener!=null){
-					onProgressListener.onProgressListener(line);
+					onProgressListener.onProgressListener(id,line);
 				}
 				continue;
 			}
-			int ret = p.waitFor();// 这里线程阻塞，将等待外部转换进程运行成功运行结束后，才往下执行
+			int ret = p.waitFor();// 
 			System.out.println(ret);
 			onProgressListener.onProgressStateChangedListener(false);
 		} catch (Exception e) {
@@ -79,7 +82,6 @@ public class FlowPusher implements Runnable{
 	
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 
 	}
 

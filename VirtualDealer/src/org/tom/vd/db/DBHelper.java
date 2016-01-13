@@ -76,8 +76,6 @@ public class DBHelper {
 				map.put("dealer", rs.getString(7));
 				map.put("groupId", rs.getString(8));
 				map.put("lastPlayTime", rs.getString(9));
-				map.put("groupId", rs.getString(8));
-				map.put("lastPlayTime", rs.getString(9));
 				map.put("shoeId", rs.getString(10));
 				map.put("roomId",rs.getString(11));
 				rst.add(map);

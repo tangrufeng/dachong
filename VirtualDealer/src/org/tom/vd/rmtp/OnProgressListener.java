@@ -12,7 +12,7 @@ package org.tom.vd.rmtp;
  */
 public interface OnProgressListener {
 
-	public void onProgressListener(String commondOutput);
+	public void onProgressListener(String id,String commondOutput);
 	
 	public void onProgressStateChangedListener(boolean isInProgress);
 
