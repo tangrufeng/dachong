@@ -1,5 +1,7 @@
 package org.tom.vd.rmtp;
 
+import org.tom.vd.bean.GameRoundInfo;
+
 /**
  * <p>Title: OnProgressListener.java</p>
  * <p>Description: </p>
@@ -12,7 +14,7 @@ package org.tom.vd.rmtp;
  */
 public interface OnProgressListener {
 
-	public void onProgressListener(String id,String commondOutput);
+	public void onProgressListener(GameRoundInfo game,String commondOutput);
 	
 	public void onProgressStateChangedListener(boolean isInProgress);
 

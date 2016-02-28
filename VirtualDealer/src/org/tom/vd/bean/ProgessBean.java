@@ -70,6 +70,13 @@ public class ProgessBean {
 	public void setFnum(int fnum) {
 		this.fnum = fnum;
 	}
+
+	@Override
+	public String toString() {
+		return "ProgessBean [timeline=" + timeline + ", status=" + status
+				+ ", bcolor=" + bcolor + ", bnum=" + bnum + ", fcolor="
+				+ fcolor + ", fnum=" + fnum + "]";
+	}
 	
 	
 	

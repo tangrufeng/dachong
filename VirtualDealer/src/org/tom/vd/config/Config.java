@@ -1,8 +1,13 @@
 package org.tom.vd.config;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.util.Properties;
+
+import org.apache.log4j.PropertyConfigurator;
 
 /**
  * <p>
@@ -41,16 +46,27 @@ public class Config {
 	}
 
 	private void init() {
-		System.out.println("Current context path==>"+Config.class.getResource("/").getPath());
-		InputStream in = Config.class.getResourceAsStream("/config.properties");
+		System.out.println("初始化配置文件........");
+		InputStream in = null;
 		try {
-			if(in==null){
-				System.out.println("Can not found the config.properties!!!!!!");
-			}else{
-				prop.load(in);
-			}
+			String path = URLDecoder.decode(this.getClass()
+					.getProtectionDomain().getCodeSource().getLocation()
+					.getPath(), "UTF-8");
+			File file = new File(path);
+			String configPorp = file.getParentFile().getAbsolutePath()
+					+ File.separator + "config.properties";
+			System.out.println(configPorp);
+			in = new FileInputStream(new File(configPorp));
+			prop.load(in);
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+				}
+			}
 		}
 	}
 	

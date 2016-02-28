@@ -4,16 +4,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import org.apache.log4j.Logger;
+import org.tom.vd.VirtualDealer;
 import org.tom.vd.bean.GameRoundInfo;
 import org.tom.vd.db.DBHelper;
 
 public class CardCache {
+
+	private static final Logger logger = Logger.getLogger(CardCache.class);
 
 	private LinkedBlockingDeque<GameRoundInfo> queue = new LinkedBlockingDeque<GameRoundInfo>();
 
 	private Boolean isFill = false;
 
 	private static CardCache instance = new CardCache();
+	
+	int shoeId=1;
 
 	private CardCache() {
 	}
@@ -23,18 +29,17 @@ public class CardCache {
 	}
 
 	/**
-	 * 获取局信息
 	 * @return
 	 */
 	public GameRoundInfo poll() {
-		if(queue.size()<=5 && !isFill){
+		if(queue.isEmpty() && !isFill){
 			new FillQueueThread().start();
 		}
 		GameRoundInfo g=null;
 		try {
-			System.out.println("begin 1");
+			logger.debug("begin 1");
 			g = queue.take();
-			System.out.println(g);
+			logger.debug(g);
 		} catch (InterruptedException e) {
 		}
 		return g;
@@ -44,12 +49,13 @@ public class CardCache {
 
 		@Override
 		public void run() {
-			System.out.println("Begin fill queue from db");
+			logger.debug("Begin fill queue from db  cache size ==>"+queue.size());
 			synchronized (isFill) {
 				isFill = true;
 			}
 			DBHelper helper = DBHelper.getHelper();
-			List<Map<String, String>> list = helper.getGameRoundInfo();
+			int vShoeId=helper.getShoeid("BJL_01_SHOEID");
+			List<Map<String, String>> list = helper.getGameRoundInfo(2);
 			for (Map<String, String> map : list) {
 				GameRoundInfo g = new GameRoundInfo();
 				g.setId(Integer.parseInt(map.get("id")));
@@ -60,8 +66,9 @@ public class CardCache {
 				g.setCardInfo(map.get("cardInfo"));
 				g.setDealer(Integer.parseInt(map.get("dealer")));
 				g.setGroupId(Integer.parseInt(map.get("groupId")));
-				g.setShoeid(Integer.parseInt(map.get("shoeId")));
+				g.setShoeid(vShoeId);
 				g.setRoomId(Integer.parseInt(map.get("roomId")));
+				g.setGameId(Integer.parseInt(map.get("gameId")));
 				queue.addLast(g);
 			}
 //			try {
@@ -80,7 +87,7 @@ public class CardCache {
 			synchronized (isFill) {
 				isFill=false;
 			}
-			System.out.println("end fill queue from db");
+			logger.debug("end fill queue from db  cache size ==>"+queue.size());
 		}
 
 	}

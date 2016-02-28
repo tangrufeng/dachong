@@ -34,9 +34,18 @@ public class GameRoundInfo {
 
 	private int roomId;
 	
+	private int gameId;
 	
 	
 	
+	public int getGameId() {
+		return gameId;
+	}
+
+	public void setGameId(int gameId) {
+		this.gameId = gameId;
+	}
+
 	public int getRoomId() {
 		return roomId;
 	}
@@ -131,8 +140,11 @@ public class GameRoundInfo {
 				+ ", createTime=" + createTime + ", gameType=" + gameType
 				+ ", videoPath=" + videoPath + ", cardInfo=" + cardInfo
 				+ ", dealer=" + dealer + ", groupId=" + groupId
-				+ ", lastPlayTime=" + lastPlayTime + "]";
+				+ ", lastPlayTime=" + lastPlayTime + ", shoeid=" + shoeid
+				+ ", roomId=" + roomId + ", gameId=" + gameId + "]";
 	}
+
+	
 	
 	
 	

@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
+import org.tom.vd.config.Config;
 
 import com.effecia.mina.MinaCommandPo;
 
@@ -79,7 +80,7 @@ public class PlatformMinaHandler extends IoHandlerAdapter {
 		ConnectFuture cf;
 		while(true){
 			try{
-				cf = MinaGameInterface.connector.connect(new InetSocketAddress("192.168.0.113",4533));
+				cf = MinaGameInterface.connector.connect(new InetSocketAddress(Config.getCfg().getString("minahost"),4533));
 				cf.awaitUninterruptibly();
 				MinaGameInterface.ioSession = cf.getSession();
 				break;

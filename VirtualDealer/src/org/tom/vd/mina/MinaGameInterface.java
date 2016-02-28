@@ -12,13 +12,13 @@ import org.apache.mina.filter.executor.ExecutorFilter;
 import org.apache.mina.filter.executor.OrderedThreadPoolExecutor;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
+import org.tom.vd.config.Config;
 
 import com.effecia.mina.MinaCommandPo;
 
 public class MinaGameInterface implements Runnable{
 	private static Logger logger = Logger.getLogger(MinaGameInterface.class);
 	
-	//绾跨▼姹�
 	public static IoSession ioSession;
 	public static NioSocketConnector connector = new NioSocketConnector();
 	public MinaGameInterface(){
@@ -74,7 +74,7 @@ public class MinaGameInterface implements Runnable{
 		
 		while(true){
 			try{
-				cf = connector.connect(new InetSocketAddress("192.168.0.113",4533));
+				cf = connector.connect(new InetSocketAddress(Config.getCfg().getString("minahost"),4533));
 				cf.awaitUninterruptibly();
 				ioSession = cf.getSession();
 			}catch(RuntimeIoException e){

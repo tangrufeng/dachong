@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+import org.tom.vd.VirtualDealer;
+import org.tom.vd.bean.GameRoundInfo;
 import org.tom.vd.config.Config;
 
 /**
@@ -18,18 +21,17 @@ import org.tom.vd.config.Config;
  */
 public class FlowPusher implements Runnable{
 
-	private OnProgressListener onProgressListener;
+	private static final Logger logger = Logger.getLogger(FlowPusher.class);
 
+	private OnProgressListener onProgressListener;
+	
+	private GameRoundInfo game;
+	
 	private String red5Host;
 	
-	private String filePath;
-	
-	private String id;
-	
-	public FlowPusher(String red5Host,String filePath,String id){
-		this.id=id;
+	public FlowPusher(GameRoundInfo g,String red5Host){
+		this.game=g;
 		this.red5Host=red5Host;
-		this.filePath=filePath;
 	}
 	
 	
@@ -47,7 +49,7 @@ public class FlowPusher implements Runnable{
 		 commend.add(Config.getCfg().getString("ffmpeg.path"));
 		 commend.add("-re");
 		 commend.add("-i");
-		 commend.add(filePath);
+		 commend.add(game.getVideoPath());
 		 commend.add("-vcodec");
 		 commend.add("copy");
 		 commend.add("-f");
@@ -66,14 +68,13 @@ public class FlowPusher implements Runnable{
 			buf = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
 			while ((line = buf.readLine()) != null) {
-				System.out.println(line);
 				if(onProgressListener!=null){
-					onProgressListener.onProgressListener(id,line);
+					onProgressListener.onProgressListener(game,line);
 				}
 				continue;
 			}
 			int ret = p.waitFor();// 
-			System.out.println(ret);
+			logger.debug(ret);
 			onProgressListener.onProgressStateChangedListener(false);
 		} catch (Exception e) {
 			e.printStackTrace();

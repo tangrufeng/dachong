@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Properties;
 
@@ -75,6 +74,11 @@ public class Main {
 
 	private void init() {
 		initLog4j();
+		initMina();
+	}
+	
+	public void start(){
+		new VirtualDealer().start();
 	}
 
 	/**

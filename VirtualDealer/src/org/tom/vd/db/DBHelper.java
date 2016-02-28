@@ -55,8 +55,37 @@ public class DBHelper {
         	log.error("连接数据库失败", e);
         }  
     }
+
+    public int getShoeid(String roomId){
+    	int shoeId=0;
+    	PreparedStatement ps=null;
+    	try {
+			if(conn==null || conn.isClosed()){
+				connDB();
+			}
+			ps = conn.prepareStatement(cfg.getString("sql.getShoeId"));
+			ps.setString(1, roomId);
+			ResultSet rs=ps.executeQuery();
+			if(rs.next()){
+				shoeId=rs.getInt(1);
+			}
+		} catch (SQLException e) {
+        	e.printStackTrace();
+        	log.error("连接数据库失败", e);
+		}finally{
+			if(ps!=null){
+				try {
+					ps.close();
+				} catch (SQLException e) {
+				}
+			}
+		}
+    	
+    	return shoeId;
+    }
     
-    public List<Map<String,String>> getGameRoundInfo(){
+    
+    public List<Map<String,String>> getGameRoundInfo(int shoeId){
     	List<Map<String,String>> rst=new ArrayList<Map<String,String>>();
     	PreparedStatement ps=null;
     	try {
@@ -64,6 +93,7 @@ public class DBHelper {
 				connDB();
 			}
 			ps = conn.prepareStatement(cfg.getString("sql.getGameRoundInfo"));
+			ps.setInt(1, shoeId);
 			ResultSet rs=ps.executeQuery();
 			while(rs.next()){
 				Map<String,String> map=new HashMap<String, String>();
@@ -78,6 +108,7 @@ public class DBHelper {
 				map.put("lastPlayTime", rs.getString(9));
 				map.put("shoeId", rs.getString(10));
 				map.put("roomId",rs.getString(11));
+				map.put("gameId",rs.getString(12));
 				rst.add(map);
 			}
 		} catch (SQLException e) {
@@ -112,7 +143,7 @@ public class DBHelper {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		System.out.println(DBHelper.getHelper().getGameRoundInfo());
+		System.out.println(DBHelper.getHelper().getShoeid("BJL_01_SHOEID"));
 	}
 
 }
