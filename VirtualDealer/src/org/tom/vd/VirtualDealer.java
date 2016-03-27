@@ -1,6 +1,9 @@
 package org.tom.vd;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,22 +48,22 @@ public class VirtualDealer implements OnProgressListener {
 	private static final Logger logger = Logger.getLogger(VirtualDealer.class);
 
 	private static Pattern pattern = Pattern.compile("\\d{2}:\\d{2}:\\d{2}");
-	private String roomId;
-	private String currentGameId;
-	private String currentShoeId;
-	private String tableStatus;
-	private String dealer;
-	private String now;
-	private int index = 0;
 
-	private Boolean isPlay = false;
+	private Boolean newProgress = false;
+	
+	private List<String> hisProList=new ArrayList<String>();	//存储某局牌的历史发牌信息
 
-	Map<String, ProgessBean> progressCache = new HashMap<String, ProgessBean>();
+	private GameRoundInfo lastGame;
+
+	Map<String, LinkedList<ProgessBean>> progressCache = new HashMap<String, LinkedList<ProgessBean>>();
 
 	public void start() {
 
 		GameRoundInfo g = CardCache.getCache().poll();
 		logger.debug("begin play:" + g);
+		if (lastGame != null && lastGame.getShoeid() != g.getShoeid()) {
+			sendChangeShoeidCommand(lastGame);
+		}
 		if (g != null) {
 			pushStreamToRed5(g, g.getId() + "");
 			parseBJLProgessToCache(g);
@@ -76,20 +79,40 @@ public class VirtualDealer implements OnProgressListener {
 	}
 
 	public void pushToMina(GameRoundInfo game, String timeline) {
-		ProgessBean pb = progressCache.remove(timeline);
-		if (pb == null) {
-			return;
+		synchronized (progressCache) {
+			LinkedList<ProgessBean> pbList = progressCache.remove(timeline);
+			if (pbList == null) {
+				return;
+			}
+			for (ProgessBean pb : pbList) {
+				logger.info(pb);
+				if ("begin".equals(pb.getStatus())) {
+					sendStartCommond(game);
+				} else if ("dealing_wait".equals(pb.getStatus())) {
+					sendDealingWaitCommond(game);
+				} else if ("deal".equals(pb.getStatus())) {
+					sendDealCommond(game, pb);
+				} else if ("end".equals(pb.getStatus())) {
+					lastGame = game; // 保留上一盘数据，以便于判断是否换靴
+					sendEndCommand(game);
+				}
+			}
 		}
-		logger.debug(pb);
-		if ("begin".equals(pb.getStatus())) {
-			sendStartCommond(game);
-		} else if ("dealing_wait".equals(pb.getStatus())) {
-			sendDealingWaitCommond(game);
-		} else if ("deal".equals(pb.getStatus())) {
-			sendDealCommond(game, pb);
-		} else if ("end".equals(pb.getStatus())) {
-			sendEndCommand(game);
-		}
+	}
+
+	/**
+	 * @param game
+	 */
+	private void sendChangeShoeidCommand(GameRoundInfo game) {
+		MinaCommandPo mcp = new MinaCommandPo();
+		mcp.setRequestType("REQUEST");
+		mcp.setModuleType("AP");
+		mcp.setCommandType(ApCommand.END_SHUFFLE.name());
+		Map map = mcp.getParameter();
+		map.put("tableId", game.getRoomId());//
+		map.put("shoeId", game.getShoeid() + "");
+		logger.debug(mcp);
+		MinaGameInterface.ioSession.write(mcp);
 	}
 
 	/**
@@ -101,11 +124,12 @@ public class VirtualDealer implements OnProgressListener {
 		mcp.setModuleType("AP");
 		mcp.setCommandType(ApCommand.END.toString());
 		Map map = mcp.getParameter();
-		map.put("tableId", game.getRoomId());// 
+		map.put("tableId", game.getRoomId());//
 		map.put("shoeId", game.getShoeid() + "");
 		map.put("gameId", game.getGameId());
 		map.put("cardInfo", game.getCardInfo());
-		map.put("gameRoundInfoId",game.getId());
+		map.put("gameRoundInfoId", game.getId());
+		logger.debug(mcp);
 		MinaGameInterface.ioSession.write(mcp);
 	}
 
@@ -114,6 +138,11 @@ public class VirtualDealer implements OnProgressListener {
 	 * @param pb
 	 */
 	private void sendDealCommond(GameRoundInfo game, ProgessBean pb) {
+		if(newProgress){
+			hisProList.clear();		//当一局新开始时，先清除历史纪录
+			newProgress=false;
+		}
+		hisProList.add(JsonUtil.object2Json(pb));
 		MinaCommandPo mcp = new MinaCommandPo();
 		mcp.setRequestType("REQUEST");
 		mcp.setModuleType("AP");
@@ -126,7 +155,9 @@ public class VirtualDealer implements OnProgressListener {
 		map.put("fnum", pb.getFnum());
 		map.put("bcolor", pb.getBcolor());
 		map.put("fcolor", pb.getFcolor());
-		map.put("gameRoundInfoId",game.getId());
+		map.put("gameRoundInfoId", game.getId());
+		map.put("history", hisProList);
+		logger.debug(mcp);
 		MinaGameInterface.ioSession.write(mcp);
 	}
 
@@ -142,7 +173,8 @@ public class VirtualDealer implements OnProgressListener {
 		map.put("tableId", game.getRoomId());//
 		map.put("shoeId", game.getShoeid() + "");
 		map.put("gameId", game.getGameId());
-		map.put("gameRoundInfoId",game.getId());
+		map.put("gameRoundInfoId", game.getId());
+		logger.debug(mcp);
 		MinaGameInterface.ioSession.write(mcp);
 	}
 
@@ -159,7 +191,8 @@ public class VirtualDealer implements OnProgressListener {
 		map.put("shoeId", game.getShoeid() + "");
 		map.put("gameId", game.getGameId());
 		map.put("countDown", 20);// TODO
-		map.put("gameRoundInfoId",game.getId());
+		map.put("gameRoundInfoId", game.getId());
+		logger.debug(mcp);
 		MinaGameInterface.ioSession.write(mcp);
 	}
 
@@ -197,9 +230,10 @@ public class VirtualDealer implements OnProgressListener {
 			start();
 		}
 	}
-	
+
 	private void parseBJLProgessToCache(GameRoundInfo g) {
 		progressCache.clear();
+		newProgress=true;
 		JSONArray jr = JSONArray.fromObject(g.getCardInfo());
 		for (int i = 0; i < jr.size(); i++) {
 			JSONObject jo = jr.getJSONObject(i);
@@ -214,7 +248,13 @@ public class VirtualDealer implements OnProgressListener {
 				bean.setFcolor(jo.getInt("fcolor"));
 			if (jo.containsKey("fnum"))
 				bean.setFnum(jo.getInt("fnum"));
-			progressCache.put(bean.getTimeline(), bean);
+			LinkedList<ProgessBean> list = progressCache
+					.get(bean.getTimeline());
+			if (list == null) {
+				list = new LinkedList<ProgessBean>();
+				progressCache.put(bean.getTimeline(), list);
+			}
+			list.add(bean);
 		}
 	}
 
